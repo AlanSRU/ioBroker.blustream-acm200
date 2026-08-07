@@ -132,6 +132,9 @@ setState('blustream-acm.0.system.commands.routeAll', '003');
 	Placeholder for the next version (at the beginning of the line):
 	### __WORK IN PROGRESS__
 -->
+### __WORK IN PROGRESS__
+- (ioBroker-Bot) Adapter requires admin >= 7.8.23 now.
+
 ### 0.3.2 (2026-08-07)
 - (Alan Paris) Fixed: the adapter stopped retrying for good if the controller was unreachable at start or when a cable was pulled
 - (Alan Paris) Fixed: a command timing out while queued removed the wrong queue entry
