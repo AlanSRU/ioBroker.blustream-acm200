@@ -133,18 +133,18 @@ setState('blustream-acm.0.system.commands.routeAll', '003');
 	### __WORK IN PROGRESS__
 -->
 ### __WORK IN PROGRESS__
-- (Alan Paris) **Fixed: the adapter stopped retrying after a failed connection.** If the controller was unreachable when the adapter started (or at the moment a cable was pulled), the internal "connection in progress" flag was never cleared, so the scheduled reconnect returned immediately without re-arming and the instance stayed dead until it was restarted manually
-- (Alan Paris) **Fixed: a command timing out while queued removed the wrong entry**, orphaning the in-flight command's promise and advancing the queue out of order
-- (Alan Paris) **Command Timeout is now actually applied to commands.** It previously only governed the socket and the initial handshake, while every real command used a hardcoded 10 s. The default was raised 5000 → 10000 ms so a fresh install behaves as before — if you had left it at the old 5000 default and see timeouts on a large system, raise it
-- (Alan Paris) Writes to routing states are validated: a non-numeric transmitter id is now rejected with a warning instead of being sent to the controller verbatim
-- (Alan Paris) The nightly full refresh no longer runs at a fixed 03:00; it is spread randomly over 02:45–03:15 so multiple instances do not poll simultaneously
-- (Alan Paris) Polling interval is now floored at twice the command timeout, so a poll cycle can always complete before the next one is armed
-- (Alan Paris) Preview URLs are only rewritten when the previewed source changes, instead of on every poll, and are correctly rebuilt for a device that is removed and comes back
-- (Alan Paris) Clarified the `refresh` / `refreshAll` button labels and descriptions; existing installs are updated on start
-- (Alan Paris) Corrected the Command Timeout help text in the configuration UI, which described the polling interval
-- (Alan Paris) Per-device detail parsing now logs at debug level instead of flooding the info log on every refresh
-- (Alan Paris) Receiver `mode` shows "Matrix"/"Video Wall" instead of the raw `MX`/`VW` tokens, and selecting the unsupported "Auto" audio source now explains why it is rejected
-- (Alan Paris) Hardened error handling: transient object-database failures during a status parse are logged instead of taking the instance down
+- (Alan Paris) Fixed: the adapter stopped retrying for good if the controller was unreachable at start or when a cable was pulled
+- (Alan Paris) Fixed: a command timing out while queued removed the wrong queue entry
+- (Alan Paris) Command Timeout now applies to all commands, not just the handshake; default raised 5000 to 10000 ms
+- (Alan Paris) Routing writes are validated; a non-numeric transmitter id is rejected instead of sent to the controller
+- (Alan Paris) The nightly full refresh is now spread over 02:45-03:15 instead of firing at exactly 03:00
+- (Alan Paris) Polling interval is floored at twice the command timeout
+- (Alan Paris) Preview URLs are only rewritten when the previewed source changes
+- (Alan Paris) Clarified the refresh and refreshAll button labels; existing installs are updated on start
+- (Alan Paris) Corrected the Command Timeout help text in the configuration UI
+- (Alan Paris) Per-device detail parsing logs at debug level instead of flooding the info log
+- (Alan Paris) Receiver mode shows Matrix or Video Wall instead of the raw MX and VW tokens
+- (Alan Paris) A transient object database error during a status parse no longer stops the instance
 
 ### 0.3.1 (2026-07-17)
 - (Alan Paris) Object role corrections for ioBroker repository review: per-device `connected` states now use `indicator.reachable`; transmitter/receiver `id` states use the `text` role
