@@ -1,31 +1,36 @@
+# Dependabot configuration
+# Cooldown delays updating normal npm dependencies by 7 days but allows security updates to be processed immediately.
+# Note: Cooldown is not supported for the github-actions ecosystem.
+# Reference: https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /
+
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      # Staggered monthly cron so the two ecosystems don't run at the same time (load distribution)
-      interval: cron
+      interval: 'cron'
       cronjob: '23 4 5 * *'
-      timezone: Europe/London
+      timezone: 'Europe/London'
     open-pull-requests-limit: 15
     cooldown:
       default-days: 7
     ignore:
-      # Keep @types/node aligned with engines.node — major bumps must be manual (E8917).
       - dependency-name: '@types/node'
-        update-types: ['version-update:semver-major']
-      # TypeScript and ESLint majors require config / source migrations — guard
-      # against failed Dependabot PR runs polluting E3031.
+        update-types:
+          - 'version-update:semver-major'
       - dependency-name: 'typescript'
-        update-types: ['version-update:semver-major']
+        update-types:
+          - 'version-update:semver-major'
       - dependency-name: 'eslint'
-        update-types: ['version-update:semver-major']
-  - package-ecosystem: github-actions
-    directory: /
+        update-types:
+          - 'version-update:semver-major'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: cron
+      interval: 'cron'
       cronjob: '47 5 12 * *'
-      timezone: Europe/London
+      timezone: 'Europe/London'
     open-pull-requests-limit: 15
     cooldown:
       default-days: 7
