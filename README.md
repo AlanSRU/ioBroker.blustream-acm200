@@ -158,6 +158,8 @@ setState('blustream-acm.0.system.commands.routeAll', '003');
 
 **Older changes have been moved to [CHANGELOG_OLD.md](CHANGELOG_OLD.md)**
 
+[Older changelogs can be found there](CHANGELOG_OLD.md)
+
 ## License
 
 MIT License
