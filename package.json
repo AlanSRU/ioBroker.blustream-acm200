@@ -1,6 +1,6 @@
 {
   "name": "iobroker.blustream-acm",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Controls Blustream ACM matrix controllers (ACM200/ACM210/ACM500/ACM1000) for audio/video distribution over IP",
   "author": {
     "name": "Alan Paris",

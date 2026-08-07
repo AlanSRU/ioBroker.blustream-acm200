@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "blustream-acm",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "news": {
       "0.3.2": {
         "en": "Fixed: the adapter stopped retrying for good if the controller was unreachable at start or when a cable was pulled\nFixed: a command timing out while queued removed the wrong queue entry\nCommand Timeout now applies to all commands, not just the handshake; default raised 5000 to 10000 ms\nRouting writes are validated; a non-numeric transmitter id is rejected instead of sent to the controller\nThe nightly full refresh is now spread over 02:45-03:15 instead of firing at exactly 03:00\nPolling interval is floored at twice the command timeout\nPreview URLs are only rewritten when the previewed source changes\nClarified the refresh and refreshAll button labels; existing installs are updated on start\nCorrected the Command Timeout help text in the configuration UI\nPer-device detail parsing logs at debug level instead of flooding the info log\nReceiver mode shows Matrix or Video Wall instead of the raw MX and VW tokens\nA transient object database error during a status parse no longer stops the instance",
