@@ -1,136 +1,134 @@
 {
-  "common": {
-    "name": "blustream-acm",
-    "version": "0.3.1",
-    "news": {
-      "0.3.1": {
-        "en": "Object role corrections for ioBroker repository review: per-device connected states use indicator.reachable; transmitter/receiver id states use the text role\nRemove a stale command-timeout comment",
-        "de": "Korrektur von Objektrollen für die ioBroker-Repository-Prüfung: gerätebezogene connected-Status verwenden indicator.reachable; die id-Status von Sendern/Empfängern verwenden die Rolle text\nEntfernen eines veralteten Kommentars zum Befehlstimeout",
-        "ru": "Исправление ролей объектов для проверки репозитория ioBroker: состояния connected отдельных устройств используют indicator.reachable; состояния id передатчиков/приемников используют роль text\nУдалён устаревший комментарий о таймауте команды",
-        "pt": "Correção de funções de objeto para a revisão do repositório ioBroker: os estados connected por dispositivo usam indicator.reachable; os estados id de transmissores/receptores usam a função text\nRemoção de um comentário obsoleto sobre o tempo limite de comando",
-        "nl": "Correctie van objectrollen voor de ioBroker-repositorycontrole: connected-statussen per apparaat gebruiken indicator.reachable; id-statussen van zenders/ontvangers gebruiken de rol text\nEen verouderde opmerking over de opdracht-time-out verwijderd",
-        "fr": "Correction des rôles d objet pour la revue du dépôt ioBroker : les états connected par appareil utilisent indicator.reachable ; les états id des émetteurs/récepteurs utilisent le rôle text\nSuppression d un commentaire obsolète sur le délai des commandes",
-        "it": "Correzione dei ruoli oggetto per la revisione del repository ioBroker: gli stati connected per dispositivo usano indicator.reachable; gli stati id di trasmettitori/ricevitori usano il ruolo text\nRimosso un commento obsoleto sul timeout dei comandi",
-        "es": "Corrección de roles de objeto para la revisión del repositorio ioBroker: los estados connected por dispositivo usan indicator.reachable; los estados id de transmisores/receptores usan el rol text\nEliminado un comentario obsoleto sobre el tiempo de espera de comandos",
-        "pl": "Korekta ról obiektów na potrzeby przeglądu repozytorium ioBroker: stany connected poszczególnych urządzeń używają indicator.reachable; stany id nadajników/odbiorników używają roli text\nUsunięto nieaktualny komentarz dotyczący limitu czasu polecenia",
-        "uk": "Виправлення ролей обʼєктів для перевірки репозиторію ioBroker: стани connected окремих пристроїв використовують indicator.reachable; стани id передавачів/приймачів використовують роль text\nВидалено застарілий коментар про тайм-аут команди",
-        "zh-cn": "为 ioBroker 仓库审核修正对象角色：各设备的 connected 状态改用 indicator.reachable；发射器/接收器的 id 状态改用 text 角色\n删除一处过时的命令超时注释"
-      },
-      "0.3.0": {
-        "en": "Renamed adapter from blustream-acm200 to blustream-acm to reflect multi-model support\nAdd a Controller Model setting (ACM200/ACM210/ACM500/ACM1000) — states and commands are now model-aware\nAdd breakaway routing (IR/RS232/USB/CEC) and output power/mute for ACM210/500/1000\nAdd Dante/analogue/HDMI audio matrix and ARC control for ACM210/1000\nPreview image URLs now use the configured controller host",
-        "de": "Adapter von blustream-acm200 in blustream-acm umbenannt, um die Unterstützung mehrerer Modelle widerzuspiegeln\nEinstellung „Controller-Modell“ hinzugefügt (ACM200/ACM210/ACM500/ACM1000) – Status und Befehle sind jetzt modellabhängig\nBreakaway-Routing (IR/RS232/USB/CEC) sowie Ausgangs-Ein/Aus und Stummschaltung für ACM210/500/1000 hinzugefügt\nDante-/Analog-/HDMI-Audiomatrix und ARC-Steuerung für ACM210/1000 hinzugefügt\nVorschaubild-URLs verwenden jetzt den konfigurierten Controller-Host",
-        "ru": "Адаптер переименован из blustream-acm200 в blustream-acm для отражения поддержки нескольких моделей\nДобавлена настройка «Модель контроллера» (ACM200/ACM210/ACM500/ACM1000) — состояния и команды теперь зависят от модели\nДобавлена раздельная маршрутизация (IR/RS232/USB/CEC) и питание/отключение звука выходов для ACM210/500/1000\nДобавлены аудиоматрица Dante/аналог/HDMI и управление ARC для ACM210/1000\nURL-адреса изображений предпросмотра теперь используют настроенный хост контроллера",
-        "pt": "Adaptador renomeado de blustream-acm200 para blustream-acm para refletir o suporte a vários modelos\nAdicionada a configuração «Modelo do controlador» (ACM200/ACM210/ACM500/ACM1000) — os estados e comandos agora dependem do modelo\nAdicionado roteamento breakaway (IR/RS232/USB/CEC) e ligar/desligar e mudo das saídas para ACM210/500/1000\nAdicionada matriz de áudio Dante/analógica/HDMI e controlo ARC para ACM210/1000\nOs URLs das imagens de pré-visualização agora usam o host do controlador configurado",
-        "nl": "Adapter hernoemd van blustream-acm200 naar blustream-acm om ondersteuning voor meerdere modellen weer te geven\nInstelling „Controllermodel“ toegevoegd (ACM200/ACM210/ACM500/ACM1000) — statussen en opdrachten zijn nu modelafhankelijk\nBreakaway-routering (IR/RS232/USB/CEC) en aan/uit en dempen van uitgangen toegevoegd voor ACM210/500/1000\nDante-/analoge/HDMI-audiomatrix en ARC-besturing toegevoegd voor ACM210/1000\nURL's van voorbeeldafbeeldingen gebruiken nu de geconfigureerde controllerhost",
-        "fr": "Adaptateur renommé de blustream-acm200 en blustream-acm pour refléter la prise en charge de plusieurs modèles\nAjout d'un paramètre « Modèle de contrôleur » (ACM200/ACM210/ACM500/ACM1000) — les états et les commandes dépendent désormais du modèle\nAjout du routage breakaway (IR/RS232/USB/CEC) ainsi que de la marche/arrêt et de la coupure du son des sorties pour ACM210/500/1000\nAjout de la matrice audio Dante/analogique/HDMI et du contrôle ARC pour ACM210/1000\nLes URL des images d'aperçu utilisent désormais l'hôte du contrôleur configuré",
-        "it": "Adattatore rinominato da blustream-acm200 a blustream-acm per riflettere il supporto multi-modello\nAggiunta l'impostazione «Modello del controller» (ACM200/ACM210/ACM500/ACM1000) — stati e comandi ora dipendono dal modello\nAggiunto il routing breakaway (IR/RS232/USB/CEC) e accensione/spegnimento e muto delle uscite per ACM210/500/1000\nAggiunta la matrice audio Dante/analogica/HDMI e il controllo ARC per ACM210/1000\nGli URL delle immagini di anteprima ora usano l'host del controller configurato",
-        "es": "Adaptador renombrado de blustream-acm200 a blustream-acm para reflejar la compatibilidad con varios modelos\nAñadido el ajuste «Modelo de controlador» (ACM200/ACM210/ACM500/ACM1000): los estados y comandos ahora dependen del modelo\nAñadido el enrutamiento independiente (IR/RS232/USB/CEC) y encendido/apagado y silencio de salidas para ACM210/500/1000\nAñadida la matriz de audio Dante/analógica/HDMI y el control ARC para ACM210/1000\nLas URL de las imágenes de vista previa ahora usan el host del controlador configurado",
-        "pl": "Zmieniono nazwę adaptera z blustream-acm200 na blustream-acm, aby odzwierciedlić obsługę wielu modeli\nDodano ustawienie „Model kontrolera“ (ACM200/ACM210/ACM500/ACM1000) — stany i polecenia zależą teraz od modelu\nDodano routing breakaway (IR/RS232/USB/CEC) oraz włączanie/wyłączanie i wyciszanie wyjść dla ACM210/500/1000\nDodano macierz audio Dante/analogową/HDMI oraz sterowanie ARC dla ACM210/1000\nAdresy URL obrazów podglądu używają teraz skonfigurowanego hosta kontrolera",
-        "uk": "Адаптер перейменовано з blustream-acm200 на blustream-acm для відображення підтримки кількох моделей\nДодано налаштування «Модель контролера» (ACM200/ACM210/ACM500/ACM1000) — стани та команди тепер залежать від моделі\nДодано роздільну маршрутизацію (IR/RS232/USB/CEC) та живлення/вимкнення звуку виходів для ACM210/500/1000\nДодано аудіоматрицю Dante/аналогову/HDMI та керування ARC для ACM210/1000\nURL-адреси зображень попереднього перегляду тепер використовують налаштований хост контролера",
-        "zh-cn": "将适配器从 blustream-acm200 重命名为 blustream-acm，以反映多型号支持\n新增“控制器型号”设置（ACM200/ACM210/ACM500/ACM1000）——状态和命令现在因型号而异\n为 ACM210/500/1000 新增分离路由（IR/RS232/USB/CEC）以及输出电源/静音\n为 ACM210/1000 新增 Dante/模拟/HDMI 音频矩阵和 ARC 控制\n预览图片 URL 现在使用配置的控制器主机"
-      }
+    "common": {
+        "name": "blustream-acm",
+        "version": "0.3.1",
+        "news": {
+            "0.3.1": {
+                "en": "Object role corrections for ioBroker repository review: per-device connected states use indicator.reachable; transmitter/receiver id states use the text role\nRemove a stale command-timeout comment",
+                "de": "Korrektur von Objektrollen für die ioBroker-Repository-Prüfung: gerätebezogene connected-Status verwenden indicator.reachable; die id-Status von Sendern/Empfängern verwenden die Rolle text\nEntfernen eines veralteten Kommentars zum Befehlstimeout",
+                "ru": "Исправление ролей объектов для проверки репозитория ioBroker: состояния connected отдельных устройств используют indicator.reachable; состояния id передатчиков/приемников используют роль text\nУдалён устаревший комментарий о таймауте команды",
+                "pt": "Correção de funções de objeto para a revisão do repositório ioBroker: os estados connected por dispositivo usam indicator.reachable; os estados id de transmissores/receptores usam a função text\nRemoção de um comentário obsoleto sobre o tempo limite de comando",
+                "nl": "Correctie van objectrollen voor de ioBroker-repositorycontrole: connected-statussen per apparaat gebruiken indicator.reachable; id-statussen van zenders/ontvangers gebruiken de rol text\nEen verouderde opmerking over de opdracht-time-out verwijderd",
+                "fr": "Correction des rôles d objet pour la revue du dépôt ioBroker : les états connected par appareil utilisent indicator.reachable ; les états id des émetteurs/récepteurs utilisent le rôle text\nSuppression d un commentaire obsolète sur le délai des commandes",
+                "it": "Correzione dei ruoli oggetto per la revisione del repository ioBroker: gli stati connected per dispositivo usano indicator.reachable; gli stati id di trasmettitori/ricevitori usano il ruolo text\nRimosso un commento obsoleto sul timeout dei comandi",
+                "es": "Corrección de roles de objeto para la revisión del repositorio ioBroker: los estados connected por dispositivo usan indicator.reachable; los estados id de transmisores/receptores usan el rol text\nEliminado un comentario obsoleto sobre el tiempo de espera de comandos",
+                "pl": "Korekta ról obiektów na potrzeby przeglądu repozytorium ioBroker: stany connected poszczególnych urządzeń używają indicator.reachable; stany id nadajników/odbiorników używają roli text\nUsunięto nieaktualny komentarz dotyczący limitu czasu polecenia",
+                "uk": "Виправлення ролей обʼєктів для перевірки репозиторію ioBroker: стани connected окремих пристроїв використовують indicator.reachable; стани id передавачів/приймачів використовують роль text\nВидалено застарілий коментар про тайм-аут команди",
+                "zh-cn": "为 ioBroker 仓库审核修正对象角色：各设备的 connected 状态改用 indicator.reachable；发射器/接收器的 id 状态改用 text 角色\n删除一处过时的命令超时注释"
+            },
+            "0.3.0": {
+                "en": "Renamed adapter from blustream-acm200 to blustream-acm to reflect multi-model support\nAdd a Controller Model setting (ACM200/ACM210/ACM500/ACM1000) — states and commands are now model-aware\nAdd breakaway routing (IR/RS232/USB/CEC) and output power/mute for ACM210/500/1000\nAdd Dante/analogue/HDMI audio matrix and ARC control for ACM210/1000\nPreview image URLs now use the configured controller host",
+                "de": "Adapter von blustream-acm200 in blustream-acm umbenannt, um die Unterstützung mehrerer Modelle widerzuspiegeln\nEinstellung „Controller-Modell“ hinzugefügt (ACM200/ACM210/ACM500/ACM1000) – Status und Befehle sind jetzt modellabhängig\nBreakaway-Routing (IR/RS232/USB/CEC) sowie Ausgangs-Ein/Aus und Stummschaltung für ACM210/500/1000 hinzugefügt\nDante-/Analog-/HDMI-Audiomatrix und ARC-Steuerung für ACM210/1000 hinzugefügt\nVorschaubild-URLs verwenden jetzt den konfigurierten Controller-Host",
+                "ru": "Адаптер переименован из blustream-acm200 в blustream-acm для отражения поддержки нескольких моделей\nДобавлена настройка «Модель контроллера» (ACM200/ACM210/ACM500/ACM1000) — состояния и команды теперь зависят от модели\nДобавлена раздельная маршрутизация (IR/RS232/USB/CEC) и питание/отключение звука выходов для ACM210/500/1000\nДобавлены аудиоматрица Dante/аналог/HDMI и управление ARC для ACM210/1000\nURL-адреса изображений предпросмотра теперь используют настроенный хост контроллера",
+                "pt": "Adaptador renomeado de blustream-acm200 para blustream-acm para refletir o suporte a vários modelos\nAdicionada a configuração «Modelo do controlador» (ACM200/ACM210/ACM500/ACM1000) — os estados e comandos agora dependem do modelo\nAdicionado roteamento breakaway (IR/RS232/USB/CEC) e ligar/desligar e mudo das saídas para ACM210/500/1000\nAdicionada matriz de áudio Dante/analógica/HDMI e controlo ARC para ACM210/1000\nOs URLs das imagens de pré-visualização agora usam o host do controlador configurado",
+                "nl": "Adapter hernoemd van blustream-acm200 naar blustream-acm om ondersteuning voor meerdere modellen weer te geven\nInstelling „Controllermodel“ toegevoegd (ACM200/ACM210/ACM500/ACM1000) — statussen en opdrachten zijn nu modelafhankelijk\nBreakaway-routering (IR/RS232/USB/CEC) en aan/uit en dempen van uitgangen toegevoegd voor ACM210/500/1000\nDante-/analoge/HDMI-audiomatrix en ARC-besturing toegevoegd voor ACM210/1000\nURL's van voorbeeldafbeeldingen gebruiken nu de geconfigureerde controllerhost",
+                "fr": "Adaptateur renommé de blustream-acm200 en blustream-acm pour refléter la prise en charge de plusieurs modèles\nAjout d'un paramètre « Modèle de contrôleur » (ACM200/ACM210/ACM500/ACM1000) — les états et les commandes dépendent désormais du modèle\nAjout du routage breakaway (IR/RS232/USB/CEC) ainsi que de la marche/arrêt et de la coupure du son des sorties pour ACM210/500/1000\nAjout de la matrice audio Dante/analogique/HDMI et du contrôle ARC pour ACM210/1000\nLes URL des images d'aperçu utilisent désormais l'hôte du contrôleur configuré",
+                "it": "Adattatore rinominato da blustream-acm200 a blustream-acm per riflettere il supporto multi-modello\nAggiunta l'impostazione «Modello del controller» (ACM200/ACM210/ACM500/ACM1000) — stati e comandi ora dipendono dal modello\nAggiunto il routing breakaway (IR/RS232/USB/CEC) e accensione/spegnimento e muto delle uscite per ACM210/500/1000\nAggiunta la matrice audio Dante/analogica/HDMI e il controllo ARC per ACM210/1000\nGli URL delle immagini di anteprima ora usano l'host del controller configurato",
+                "es": "Adaptador renombrado de blustream-acm200 a blustream-acm para reflejar la compatibilidad con varios modelos\nAñadido el ajuste «Modelo de controlador» (ACM200/ACM210/ACM500/ACM1000): los estados y comandos ahora dependen del modelo\nAñadido el enrutamiento independiente (IR/RS232/USB/CEC) y encendido/apagado y silencio de salidas para ACM210/500/1000\nAñadida la matriz de audio Dante/analógica/HDMI y el control ARC para ACM210/1000\nLas URL de las imágenes de vista previa ahora usan el host del controlador configurado",
+                "pl": "Zmieniono nazwę adaptera z blustream-acm200 na blustream-acm, aby odzwierciedlić obsługę wielu modeli\nDodano ustawienie „Model kontrolera“ (ACM200/ACM210/ACM500/ACM1000) — stany i polecenia zależą teraz od modelu\nDodano routing breakaway (IR/RS232/USB/CEC) oraz włączanie/wyłączanie i wyciszanie wyjść dla ACM210/500/1000\nDodano macierz audio Dante/analogową/HDMI oraz sterowanie ARC dla ACM210/1000\nAdresy URL obrazów podglądu używają teraz skonfigurowanego hosta kontrolera",
+                "uk": "Адаптер перейменовано з blustream-acm200 на blustream-acm для відображення підтримки кількох моделей\nДодано налаштування «Модель контролера» (ACM200/ACM210/ACM500/ACM1000) — стани та команди тепер залежать від моделі\nДодано роздільну маршрутизацію (IR/RS232/USB/CEC) та живлення/вимкнення звуку виходів для ACM210/500/1000\nДодано аудіоматрицю Dante/аналогову/HDMI та керування ARC для ACM210/1000\nURL-адреси зображень попереднього перегляду тепер використовують налаштований хост контролера",
+                "zh-cn": "将适配器从 blustream-acm200 重命名为 blustream-acm，以反映多型号支持\n新增“控制器型号”设置（ACM200/ACM210/ACM500/ACM1000）——状态和命令现在因型号而异\n为 ACM210/500/1000 新增分离路由（IR/RS232/USB/CEC）以及输出电源/静音\n为 ACM210/1000 新增 Dante/模拟/HDMI 音频矩阵和 ARC 控制\n预览图片 URL 现在使用配置的控制器主机"
+            }
+        },
+        "titleLang": {
+            "en": "Blustream ACM Matrix Controller",
+            "de": "Blustream ACM Matrix-Controller",
+            "ru": "Контроллер матрицы Blustream ACM",
+            "pt": "Controlador de matriz Blustream ACM",
+            "nl": "Blustream ACM Matrix Controller",
+            "fr": "Contrôleur de matrice Blustream ACM",
+            "it": "Controller matrice Blustream ACM",
+            "es": "Controlador de matriz Blustream ACM",
+            "pl": "Kontroler macierzy Blustream ACM",
+            "zh-cn": "Blustream ACM 矩阵控制器",
+            "uk": "Матричний контролер Blustream ACM"
+        },
+        "desc": {
+            "en": "Controls Blustream ACM matrix controllers (ACM200/ACM210/ACM500/ACM1000) for audio/video distribution over IP",
+            "de": "Steuert Blustream ACM-Matrix-Controller (ACM200/ACM210/ACM500/ACM1000) für Audio-/Videoverteilung über IP",
+            "ru": "Управляет матричными контроллерами Blustream ACM (ACM200/ACM210/ACM500/ACM1000) для распределения аудио/видео по IP",
+            "pt": "Controla os controladores de matriz Blustream ACM (ACM200/ACM210/ACM500/ACM1000) para distribuição de áudio/vídeo por IP",
+            "nl": "Bestuurt Blustream ACM-matrixcontrollers (ACM200/ACM210/ACM500/ACM1000) voor audio/video-distributie via IP",
+            "fr": "Contrôle les contrôleurs de matrice Blustream ACM (ACM200/ACM210/ACM500/ACM1000) pour la distribution audio/vidéo sur IP",
+            "it": "Controlla i controller di matrice Blustream ACM (ACM200/ACM210/ACM500/ACM1000) per la distribuzione audio/video tramite IP",
+            "es": "Controla los controladores de matriz Blustream ACM (ACM200/ACM210/ACM500/ACM1000) para la distribución de audio/video a través de IP",
+            "pl": "Steruje kontrolerami macierzy Blustream ACM (ACM200/ACM210/ACM500/ACM1000) do dystrybucji audio/wideo przez IP",
+            "zh-cn": "控制 Blustream ACM 矩阵控制器（ACM200/ACM210/ACM500/ACM1000），用于通过 IP 进行音频/视频分发",
+            "uk": "Керує матричними контролерами Blustream ACM (ACM200/ACM210/ACM500/ACM1000) для розповсюдження аудіо/відео через IP"
+        },
+        "authors": ["Alan Paris <alan.paris@scottish.rugby>"],
+        "keywords": [
+            "blustream",
+            "acm",
+            "acm200",
+            "acm210",
+            "acm500",
+            "acm1000",
+            "matrix",
+            "video",
+            "audio",
+            "hdmi",
+            "distribution"
+        ],
+        "licenseInformation": {
+            "license": "MIT",
+            "type": "free"
+        },
+        "platform": "Javascript/Node.js",
+        "tier": 3,
+        "icon": "blustream-acm.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/AlanSRU/ioBroker.blustream-acm/main/admin/blustream-acm.png",
+        "readme": "https://github.com/AlanSRU/ioBroker.blustream-acm/blob/main/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "multimedia",
+        "compact": true,
+        "connectionType": "local",
+        "dataSource": "poll",
+        "adminUI": {
+            "config": "json"
+        },
+        "dependencies": [
+            {
+                "js-controller": ">=6.0.11"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=7.6.20"
+            }
+        ]
     },
-    "titleLang": {
-      "en": "Blustream ACM Matrix Controller",
-      "de": "Blustream ACM Matrix-Controller",
-      "ru": "Контроллер матрицы Blustream ACM",
-      "pt": "Controlador de matriz Blustream ACM",
-      "nl": "Blustream ACM Matrix Controller",
-      "fr": "Contrôleur de matrice Blustream ACM",
-      "it": "Controller matrice Blustream ACM",
-      "es": "Controlador de matriz Blustream ACM",
-      "pl": "Kontroler macierzy Blustream ACM",
-      "zh-cn": "Blustream ACM 矩阵控制器",
-      "uk": "Матричний контролер Blustream ACM"
+    "native": {
+        "model": "ACM200",
+        "host": "192.168.0.225",
+        "port": 23,
+        "pollInterval": 30000,
+        "timeout": 10000
     },
-    "desc": {
-      "en": "Controls Blustream ACM matrix controllers (ACM200/ACM210/ACM500/ACM1000) for audio/video distribution over IP",
-      "de": "Steuert Blustream ACM-Matrix-Controller (ACM200/ACM210/ACM500/ACM1000) für Audio-/Videoverteilung über IP",
-      "ru": "Управляет матричными контроллерами Blustream ACM (ACM200/ACM210/ACM500/ACM1000) для распределения аудио/видео по IP",
-      "pt": "Controla os controladores de matriz Blustream ACM (ACM200/ACM210/ACM500/ACM1000) para distribuição de áudio/vídeo por IP",
-      "nl": "Bestuurt Blustream ACM-matrixcontrollers (ACM200/ACM210/ACM500/ACM1000) voor audio/video-distributie via IP",
-      "fr": "Contrôle les contrôleurs de matrice Blustream ACM (ACM200/ACM210/ACM500/ACM1000) pour la distribution audio/vidéo sur IP",
-      "it": "Controlla i controller di matrice Blustream ACM (ACM200/ACM210/ACM500/ACM1000) per la distribuzione audio/video tramite IP",
-      "es": "Controla los controladores de matriz Blustream ACM (ACM200/ACM210/ACM500/ACM1000) para la distribución de audio/video a través de IP",
-      "pl": "Steruje kontrolerami macierzy Blustream ACM (ACM200/ACM210/ACM500/ACM1000) do dystrybucji audio/wideo przez IP",
-      "zh-cn": "控制 Blustream ACM 矩阵控制器（ACM200/ACM210/ACM500/ACM1000），用于通过 IP 进行音频/视频分发",
-      "uk": "Керує матричними контролерами Blustream ACM (ACM200/ACM210/ACM500/ACM1000) для розповсюдження аудіо/відео через IP"
-    },
-    "authors": [
-      "Alan Paris <alan.paris@scottish.rugby>"
-    ],
-    "keywords": [
-      "blustream",
-      "acm",
-      "acm200",
-      "acm210",
-      "acm500",
-      "acm1000",
-      "matrix",
-      "video",
-      "audio",
-      "hdmi",
-      "distribution"
-    ],
-    "licenseInformation": {
-      "license": "MIT",
-      "type": "free"
-    },
-    "platform": "Javascript/Node.js",
-    "tier": 3,
-    "icon": "blustream-acm.png",
-    "enabled": true,
-    "extIcon": "https://raw.githubusercontent.com/AlanSRU/ioBroker.blustream-acm/main/admin/blustream-acm.png",
-    "readme": "https://github.com/AlanSRU/ioBroker.blustream-acm/blob/main/README.md",
-    "loglevel": "info",
-    "mode": "daemon",
-    "type": "multimedia",
-    "compact": true,
-    "connectionType": "local",
-    "dataSource": "poll",
-    "adminUI": {
-      "config": "json"
-    },
-    "dependencies": [
-      {
-        "js-controller": ">=6.0.11"
-      }
-    ],
-    "globalDependencies": [
-      {
-        "admin": ">=7.6.20"
-      }
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
     ]
-  },
-  "native": {
-    "model": "ACM200",
-    "host": "192.168.0.225",
-    "port": 23,
-    "pollInterval": 30000,
-    "timeout": 5000
-  },
-  "objects": [],
-  "instanceObjects": [
-    {
-      "_id": "info",
-      "type": "channel",
-      "common": {
-        "name": "Information"
-      },
-      "native": {}
-    },
-    {
-      "_id": "info.connection",
-      "type": "state",
-      "common": {
-        "role": "indicator.connected",
-        "name": "Device or service connected",
-        "type": "boolean",
-        "read": true,
-        "write": false,
-        "def": false
-      },
-      "native": {}
-    }
-  ]
 }

@@ -12,5 +12,5 @@
     "Polling Interval (ms)": "轮询间隔（毫秒）",
     "Port": "港口",
     "Select the connected Blustream ACM controller model. This determines which commands and states are available.": "选择连接的 Blustream ACM 控制器型号。这决定了哪些命令和状态可用。",
-    "Timeout for commands sent to the ACM controller (default: 5000 ms). Shorter polling intervals give more frequent updates but increase network traffic.": "发送到 ACM 控制器的命令超时（默认值：5000 毫秒）。轮询间隔越短，更新越频繁，但会增加网络流量。"
+    "Timeout for a single command sent to the ACM controller (default: 10000 ms). The polling interval is forced to at least twice this value.": "发送到 ACM 控制器的单条命令的超时时间（默认值：10000 毫秒）。轮询间隔将被强制设为至少该值的两倍。"
 }

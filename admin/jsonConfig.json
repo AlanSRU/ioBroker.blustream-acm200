@@ -24,10 +24,22 @@
                     "default": "ACM200",
                     "newLine": true,
                     "options": [
-                        { "label": "ACM200", "value": "ACM200" },
-                        { "label": "ACM210", "value": "ACM210" },
-                        { "label": "ACM500", "value": "ACM500" },
-                        { "label": "ACM1000", "value": "ACM1000" }
+                        {
+                            "label": "ACM200",
+                            "value": "ACM200"
+                        },
+                        {
+                            "label": "ACM210",
+                            "value": "ACM210"
+                        },
+                        {
+                            "label": "ACM500",
+                            "value": "ACM500"
+                        },
+                        {
+                            "label": "ACM1000",
+                            "value": "ACM1000"
+                        }
                     ],
                     "xs": 12,
                     "sm": 12,
@@ -88,20 +100,22 @@
                     "sm": 12,
                     "md": 6,
                     "lg": 6,
-                    "xl": 6
+                    "xl": 6,
+                    "default": 30000
                 },
                 "timeout": {
                     "type": "number",
                     "label": "Command Timeout (ms)",
-                    "min": 500,
+                    "min": 1000,
                     "max": 60000,
                     "step": 100,
-                    "help": "Timeout for commands sent to the ACM controller (default: 5000 ms). Shorter polling intervals give more frequent updates but increase network traffic.",
+                    "help": "Timeout for a single command sent to the ACM controller (default: 10000 ms). The polling interval is forced to at least twice this value.",
                     "xs": 12,
                     "sm": 12,
                     "md": 6,
                     "lg": 6,
-                    "xl": 6
+                    "xl": 6,
+                    "default": 10000
                 }
             }
         }

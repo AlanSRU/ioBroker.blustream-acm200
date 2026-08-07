@@ -12,5 +12,5 @@
     "Polling Interval (ms)": "Intervallo di polling (ms)",
     "Port": "Porta",
     "Select the connected Blustream ACM controller model. This determines which commands and states are available.": "Seleziona il modello di controller Blustream ACM collegato. Ciò determina quali comandi e stati sono disponibili.",
-    "Timeout for commands sent to the ACM controller (default: 5000 ms). Shorter polling intervals give more frequent updates but increase network traffic.": "Timeout per i comandi inviati al controller ACM (impostazione predefinita: 5000 ms). Intervalli di polling più brevi forniscono aggiornamenti più frequenti ma aumentano il traffico di rete."
+    "Timeout for a single command sent to the ACM controller (default: 10000 ms). The polling interval is forced to at least twice this value.": "Timeout per un singolo comando inviato al controller ACM (predefinito: 10000 ms). L’intervallo di polling viene forzato ad almeno il doppio di questo valore."
 }

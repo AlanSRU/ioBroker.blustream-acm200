@@ -12,5 +12,5 @@
     "IP address of the ACM controller": "IP address of the ACM controller",
     "Default Telnet port: 23": "Default Telnet port: 23",
     "How often to poll for status updates (default: 30000 ms). Must be at least twice the command timeout; lower values are raised automatically.": "How often to poll for status updates (default: 30000 ms). Must be at least twice the command timeout; lower values are raised automatically.",
-    "Timeout for commands sent to the ACM controller (default: 5000 ms). Shorter polling intervals give more frequent updates but increase network traffic.": "Timeout for commands sent to the ACM controller (default: 5000 ms). Shorter polling intervals give more frequent updates but increase network traffic."
+    "Timeout for a single command sent to the ACM controller (default: 10000 ms). The polling interval is forced to at least twice this value.": "Timeout for a single command sent to the ACM controller (default: 10000 ms). The polling interval is forced to at least twice this value."
 }

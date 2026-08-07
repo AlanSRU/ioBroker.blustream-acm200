@@ -34,7 +34,14 @@ const BANNER = {
 };
 
 /**
- * Labels for the two refresh buttons, which are easily confused. Held here because
+ * Receiver states whose value is a transmitter id (as opposed to a mode token).
+ * Writes to these are normalised with sanitizeDeviceId() before reaching a
+ * command builder — see onStateChange.
+ */
+const ROUTE_STATES = ['route', 'videoRoute', 'audioRoute', 'irRoute', 'rs232Route', 'usbRoute', 'cecRoute'];
+
+/**
+ * Labels for the two refresh buttons, which are easily confused. Held because
  * they are used twice: once when the objects are created and once to push the text
  * onto installs that predate a wording change (setObjectNotExists never updates an
  * object that already exists) — see syncCommandLabels().
@@ -87,7 +94,7 @@ class BlustreamAcm extends utils.Adapter {
         this.commandQueue = [];
         this.processingCommand = false;
 
-        this.timeout = 5000; // default command timeout (ms); overridden from config in onReady
+        this.timeout = 10000; // default command timeout (ms); overridden from config in onReady
         this.heartbeatInterval = 10000; // Heartbeat every 10 s
 
         this.collectingTxInfo = false;
@@ -166,15 +173,84 @@ class BlustreamAcm extends utils.Adapter {
             return;
         }
 
-        this.previewUrlSources[stateId] = sourceIp;
         const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${Date.now()}`;
         await this.setState(stateId, previewUrl, true);
+        // Cached only after the write succeeded — a failed write must not latch the id out
+        this.previewUrlSources[stateId] = sourceIp;
+    }
+
+    /**
+     * Drop cached preview sources for a device whose objects have just been deleted.
+     * Without this, a device that disappears and returns with the same id and the same
+     * source would keep its recreated previewUrl state empty forever.
+     *
+     * @param {string} channel - 'transmitters' or 'receivers'
+     * @param {string} deviceId - Device id whose cache entries should be forgotten
+     */
+    forgetPreviewUrl(channel, deviceId) {
+        delete this.previewUrlSources[`${channel}.${deviceId}.previewUrl`];
     }
 
     /**
      * Initialize the adapter
      */
     async onReady() {
+        // Reset the connection indicator at startup
+        this.setState('info.connection', false, true);
+
+        // Resolve the controller model from config (falls back to the default)
+        const resolved = resolveModel(this.config.model);
+        if (!resolved.valid) {
+            this.log.warn(`Unknown or missing controller model "${this.config.model}"; falling back to ${resolved.id}`);
+        }
+        this.model = resolved.id;
+        this.modelDef = resolved.def;
+        this.log.info(`Controller model: ${this.modelDef.label}`);
+
+        // Get configuration from admin settings (validated & clamped to safe ranges)
+        this.host = this.config.host || this.host;
+        this.port = this.validateNumber('port', this.config.port, this.port, 1, 65535);
+        // Floor of 1000 ms: a multi-line STATUS response cannot realistically arrive faster,
+        // and this timeout is what the poll-interval floor below is derived from.
+        this.timeout = this.validateNumber('timeout', this.config.timeout, this.timeout, 1000, 60000);
+        // A poll cycle must be able to finish (STATUS command + response) before the next one is
+        // armed, so the interval floor is derived from the command timeout rather than fixed.
+        const pollFloor = Math.max(1000, this.timeout * 2);
+        this.pollInterval = this.validateNumber(
+            'pollInterval',
+            this.config.pollInterval,
+            Math.max(this.pollInterval, pollFloor),
+            pollFloor,
+            3600000,
+        );
+
+        this.log.info(`Initializing with host: ${this.host}, port: ${this.port}, timeout: ${this.timeout}ms`);
+
+        // Create root objects using setObjectNotExists instead of createDevice
+        await this.setObjectNotExistsAsync('system', {
+            type: 'device',
+            common: {
+                name: 'Blustream ACM System',
+            },
+            native: {},
+        });
+
+        await this.setObjectNotExistsAsync('system.status', {
+            type: 'channel',
+            common: {
+                name: 'System Status',
+            },
+            native: {},
+        });
+
+        await this.setObjectNotExistsAsync('system.commands', {
+            type: 'channel',
+            common: {
+                name: 'System Commands',
+            },
+            native: {},
+        });
+
         // Add manual refresh buttons and status indicators
         await this.setObjectNotExistsAsync('system.commands.refreshAll', {
             type: 'state',
@@ -227,60 +303,6 @@ class BlustreamAcm extends utils.Adapter {
                 write: false,
                 def: '',
                 desc: 'Timestamp of the next scheduled full refresh',
-            },
-            native: {},
-        });
-
-        // Reset the connection indicator at startup
-        this.setState('info.connection', false, true);
-
-        // Resolve the controller model from config (falls back to the default)
-        const resolved = resolveModel(this.config.model);
-        if (!resolved.valid) {
-            this.log.warn(`Unknown or missing controller model "${this.config.model}"; falling back to ${resolved.id}`);
-        }
-        this.model = resolved.id;
-        this.modelDef = resolved.def;
-        this.log.info(`Controller model: ${this.modelDef.label}`);
-
-        // Get configuration from admin settings (validated & clamped to safe ranges)
-        this.host = this.config.host || this.host;
-        this.port = this.validateNumber('port', this.config.port, this.port, 1, 65535);
-        this.timeout = this.validateNumber('timeout', this.config.timeout, this.timeout, 500, 60000);
-        // A poll cycle must be able to finish (STATUS command + response) before the next one is
-        // armed, so the interval floor is derived from the command timeout rather than fixed.
-        const pollFloor = Math.max(1000, this.timeout * 2);
-        this.pollInterval = this.validateNumber(
-            'pollInterval',
-            this.config.pollInterval,
-            Math.max(this.pollInterval, pollFloor),
-            pollFloor,
-            3600000,
-        );
-
-        this.log.info(`Initializing with host: ${this.host}, port: ${this.port}, timeout: ${this.timeout}ms`);
-
-        // Create root objects using setObjectNotExists instead of createDevice
-        await this.setObjectNotExistsAsync('system', {
-            type: 'device',
-            common: {
-                name: 'Blustream ACM System',
-            },
-            native: {},
-        });
-
-        await this.setObjectNotExistsAsync('system.status', {
-            type: 'channel',
-            common: {
-                name: 'System Status',
-            },
-            native: {},
-        });
-
-        await this.setObjectNotExistsAsync('system.commands', {
-            type: 'channel',
-            common: {
-                name: 'System Commands',
             },
             native: {},
         });
@@ -438,40 +460,42 @@ class BlustreamAcm extends utils.Adapter {
                 this.log.info('Manual full refresh triggered');
 
                 // Check if refresh is already running
-                this.getStateAsync('system.status.fullRefreshRunning').then(runningState => {
-                    if (runningState && runningState.val === true) {
-                        this.log.warn('Full refresh already in progress, ignoring request');
-                        return;
-                    }
+                this.getStateAsync('system.status.fullRefreshRunning')
+                    .then(runningState => {
+                        if (runningState && runningState.val === true) {
+                            this.log.warn('Full refresh already in progress, ignoring request');
+                            return;
+                        }
 
-                    // Perform full refresh
-                    this.refreshAllDeviceDetails()
-                        .then(() => {
-                            this.log.info('Manual full refresh completed successfully');
-                        })
-                        .catch(err => {
-                            this.log.error(`Error during manual full refresh: ${err.message}`);
-                        });
-                });
+                        // Perform full refresh
+                        this.refreshAllDeviceDetails()
+                            .then(() => {
+                                this.log.info('Manual full refresh completed successfully');
+                            })
+                            .catch(err => {
+                                this.log.error(`Error during manual full refresh: ${err.message}`);
+                            });
+                    })
+                    .catch(err => this.log.warn(`Could not check refresh status: ${err.message}`));
                 return;
             }
 
-            // Handle route-to-all-displays commands
-            if (id === `${this.namespace}.system.commands.routeAll` && state.val) {
-                this.log.info(`Routing transmitter ${state.val} (audio+video) to all displays`);
-                this.routeVideoToAll(String(state.val));
-                return;
-            }
-
-            if (id === `${this.namespace}.system.commands.routeAllVideo` && state.val) {
-                this.log.info(`Routing video from transmitter ${state.val} to all displays`);
-                this.routeVideoOnlyToAll(String(state.val));
-                return;
-            }
-
-            if (id === `${this.namespace}.system.commands.routeAllAudio` && state.val) {
-                this.log.info(`Routing audio from transmitter ${state.val} to all displays`);
-                this.routeAudioToAll(String(state.val));
+            // Handle route-to-all-displays commands. The written value is a transmitter id,
+            // so it gets the same normalisation as the per-receiver routing states.
+            const routeAllTargets = {
+                [`${this.namespace}.system.commands.routeAll`]: ['audio+video', tx => this.routeVideoToAll(tx)],
+                [`${this.namespace}.system.commands.routeAllVideo`]: ['video', tx => this.routeVideoOnlyToAll(tx)],
+                [`${this.namespace}.system.commands.routeAllAudio`]: ['audio', tx => this.routeAudioToAll(tx)],
+            };
+            if (routeAllTargets[id] && state.val) {
+                const [what, run] = routeAllTargets[id];
+                const tx = this.sanitizeDeviceId(String(state.val));
+                if (!tx) {
+                    this.log.warn(`Ignoring routeAll write "${state.val}": not a numeric transmitter id`);
+                    return;
+                }
+                this.log.info(`Routing transmitter ${tx} (${what}) to all displays`);
+                run(tx);
                 return;
             }
 
@@ -483,7 +507,17 @@ class BlustreamAcm extends utils.Adapter {
                 const stateName = parts[2];
 
                 if (receiverId) {
-                    const src = state.val ? String(state.val) : '';
+                    // Routing states carry a transmitter id written by a user or a script —
+                    // normalise it before it reaches a command builder, otherwise a typo is
+                    // sent verbatim down the telnet socket (e.g. "abc" -> "OUT001FRabc").
+                    const raw = state.val ? String(state.val) : '';
+                    const src = ROUTE_STATES.includes(stateName) ? this.sanitizeDeviceId(raw) || '' : raw;
+                    if (raw && !src) {
+                        this.log.warn(
+                            `Ignoring write of "${raw}" to ${stateName} on receiver ${receiverId}: not a numeric transmitter id`,
+                        );
+                        return;
+                    }
                     switch (stateName) {
                         // Routing states carry the source transmitter id; an empty write is ignored.
                         case 'route':
@@ -626,12 +660,13 @@ class BlustreamAcm extends utils.Adapter {
             return;
         }
 
-        this.connectionInProgress = true;
         this.log.info(`Connecting to ${this.modelDef.label} at ${this.host}:${this.port}`);
         this.log.info(`Using socket timeout: ${this.timeout}ms`);
 
-        // Clear any existing connection and timers
+        // Clear any existing connection and timers. Must run BEFORE the in-progress flag
+        // is raised, because cleanup() clears that flag (see the note there).
         this.cleanup(false);
+        this.connectionInProgress = true;
 
         try {
             // Create socket connection
@@ -796,8 +831,9 @@ class BlustreamAcm extends utils.Adapter {
             // Set up timeout for heartbeat response
             this.resetHeartbeatTimeout();
 
-            // Use a command that the ACM200 actually supports
-            this.executeCommand('STATUS', 10000)
+            // Use a command that the ACM200 actually supports. Capped at the heartbeat
+            // interval so a long configured timeout cannot outlive the watchdog below.
+            this.executeCommand('STATUS', Math.min(this.timeout, this.heartbeatInterval))
                 .then(response => {
                     this.log.debug(`Heartbeat successful: received ${response ? 'response' : 'no response'}`);
                 })
@@ -838,55 +874,61 @@ class BlustreamAcm extends utils.Adapter {
      * @param {number} timeout - Command timeout in ms
      * @returns {Promise} - Resolves with response, rejects on error or timeout
      */
-    executeCommand(command, timeout = 10000) {
+    executeCommand(command, timeout = this.timeout) {
         return new Promise((resolve, reject) => {
             if (!this.socket || this.socket.destroyed) {
                 return reject(new Error('Socket not connected'));
             }
 
-            // Add to command queue
-            this.commandQueue.push({
+            const entry = {
                 command,
                 timeout,
                 resolve,
                 reject,
                 responseReceived: false, // Track if any response was received
-                timer: this.setTimeout(() => {
-                    // If we've received some response but not completed, don't time out
-                    if (
-                        this.commandQueue.length > 0 &&
-                        this.commandQueue[0].command === command &&
-                        this.commandQueue[0].responseReceived
-                    ) {
-                        this.log.info(
-                            `Command ${command} received partial response but not completed, extending timeout`,
-                        );
-                        // Extend timeout by adding another timer
-                        this.commandQueue[0].timer = this.setTimeout(() => {
-                            this.log.warn(`Command still timed out after extension: ${command}`);
-                            // Now we really time out
-                            if (this.commandQueue.length > 0 && this.commandQueue[0].command === command) {
-                                this.commandQueue.shift();
-                                this.processingCommand = false;
-                                reject(new Error('Command timed out after extension'));
+                timer: null,
+            };
 
-                                // Process next command
-                                this.processNextCommand();
-                            }
-                        }, timeout * 0.5); // Add 50% more time
-                        return;
-                    }
+            // Drop this exact entry from the queue. Identity matters: several callers send
+            // the same literal ('STATUS' from the heartbeat, the poll and the refresh
+            // button), so matching on the command string could remove the wrong one and
+            // orphan its promise.
+            const removeEntry = () => {
+                const idx = this.commandQueue.indexOf(entry);
+                if (idx === -1) {
+                    return false;
+                }
+                this.commandQueue.splice(idx, 1);
+                return idx === 0;
+            };
 
-                    this.log.warn(`Command timed out: ${command}`);
-                    // Remove this command from the queue
-                    this.commandQueue.shift();
+            const expire = () => {
+                // A partial response means the device is still talking — give it more time
+                if (entry.responseReceived) {
+                    this.log.info(`Command ${command} received partial response but not completed, extending timeout`);
+                    entry.timer = this.setTimeout(() => {
+                        this.log.warn(`Command still timed out after extension: ${command}`);
+                        if (removeEntry()) {
+                            this.processingCommand = false;
+                        }
+                        reject(new Error('Command timed out after extension'));
+                        this.processNextCommand();
+                    }, timeout * 0.5); // Add 50% more time
+                    return;
+                }
+
+                this.log.warn(`Command timed out: ${command}`);
+                // Only release the in-flight lock if the entry that expired was the one
+                // actually being processed (the head of the queue).
+                if (removeEntry()) {
                     this.processingCommand = false;
-                    reject(new Error('Command timed out'));
+                }
+                reject(new Error('Command timed out'));
+                this.processNextCommand();
+            };
 
-                    // Process next command
-                    this.processNextCommand();
-                }, timeout),
-            });
+            entry.timer = this.setTimeout(expire, timeout);
+            this.commandQueue.push(entry);
 
             // Process queue if not already processing
             if (!this.processingCommand) {
@@ -1132,6 +1174,12 @@ class BlustreamAcm extends utils.Adapter {
     cleanup(reconnect = true) {
         this.connected = false;
         this.processingCommand = false;
+        // Must be cleared here, not just on the paths that reach handleConnect(). A socket
+        // that fails before 'connect' (host down, ECONNREFUSED, connect-phase timeout) lands
+        // in handleError/handleTimeout -> cleanup(), and if the flag stayed set the scheduled
+        // reconnect would hit the "already in progress" guard, return without re-arming, and
+        // the instance would never retry again.
+        this.connectionInProgress = false;
         this.setState('info.connection', false, true);
         this.setState('system.status.connected', false, true);
 
@@ -1288,7 +1336,8 @@ class BlustreamAcm extends utils.Adapter {
             nextRefresh.setDate(nextRefresh.getDate() + 1);
         }
 
-        const offsetMs = Math.floor(Math.random() * 31 * 60 * 1000) - 15 * 60 * 1000;
+        // 30 minutes wide, centred on 3am: [-15 min, +15 min)
+        const offsetMs = Math.floor(Math.random() * 30 * 60 * 1000) - 15 * 60 * 1000;
         nextRefresh.setTime(nextRefresh.getTime() + offsetMs);
 
         // A negative offset can pull the slot back before "now" — push it out a day
@@ -1498,7 +1547,9 @@ class BlustreamAcm extends utils.Adapter {
 
                 // Update the receiver's preview URL to show the new source
                 if (this.transmitterStates[txId]) {
-                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip);
+                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip).catch(err =>
+                        this.log.warn(`Could not update preview URL for RX ${rxId}: ${err.message}`),
+                    );
                 }
             })
             .catch(err => {
@@ -1530,7 +1581,9 @@ class BlustreamAcm extends utils.Adapter {
                 }
 
                 if (this.transmitterStates[txId]) {
-                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip);
+                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip).catch(err =>
+                        this.log.warn(`Could not update preview URL for RX ${rxId}: ${err.message}`),
+                    );
                 }
             })
             .catch(err => {
@@ -1679,7 +1732,15 @@ class BlustreamAcm extends utils.Adapter {
         const upperSource = source.toUpperCase();
 
         if (!validSources.includes(upperSource)) {
-            this.log.error(`Invalid audio source "${source}". Must be one of: ${validSources.join(', ')}`);
+            if (upperSource === 'AUTO') {
+                // AUTO is reported by the device (and therefore kept in the states map so it
+                // displays), but selecting it causes receiver dropout on IP200UHD-TX.
+                this.log.warn(
+                    `Audio source "Auto" can be reported by the controller but cannot be set from the adapter (it causes receiver dropout). Choose HDMI or Analogue L/R.`,
+                );
+            } else {
+                this.log.error(`Invalid audio source "${source}". Must be one of: ${validSources.join(', ')}`);
+            }
             return;
         }
 
@@ -1827,9 +1888,11 @@ class BlustreamAcm extends utils.Adapter {
                     def: '',
                 },
                 native: {},
-            }).then(() => {
-                this.setState('system.status.firmwareVersion', fwMatch[1], true);
-            });
+            })
+                .then(() => {
+                    this.setState('system.status.firmwareVersion', fwMatch[1], true);
+                })
+                .catch(err => this.log.warn(`Could not store firmware version: ${err.message}`));
         }
 
         // Try to parse transmitters and receivers regardless of header format
@@ -1877,6 +1940,7 @@ class BlustreamAcm extends utils.Adapter {
                     if (!this.transmitterStates[deviceId]) {
                         this.log.info(`Removing stale transmitter ${deviceId} (no longer reported by controller)`);
                         await this.deleteChannelAsync('transmitters', deviceId);
+                        this.forgetPreviewUrl('transmitters', deviceId);
                     }
                 }
             }
@@ -1895,6 +1959,7 @@ class BlustreamAcm extends utils.Adapter {
                     if (!this.receiverStates[deviceId]) {
                         this.log.info(`Removing stale receiver ${deviceId} (no longer reported by controller)`);
                         await this.deleteChannelAsync('receivers', deviceId);
+                        this.forgetPreviewUrl('receivers', deviceId);
                     }
                 }
             }
@@ -2014,7 +2079,9 @@ class BlustreamAcm extends utils.Adapter {
                     }
 
                     // Create or update transmitter
-                    this.createTransmitter(id, ip, edid, status, name, model, audioSource);
+                    this.createTransmitter(id, ip, edid, status, name, model, audioSource).catch(err =>
+                        this.log.warn(`Could not update transmitter ${id}: ${err.message}`),
+                    );
                     parsedCount++;
 
                     this.log.debug(
@@ -2095,7 +2162,9 @@ class BlustreamAcm extends utils.Adapter {
                     const model = parts[statusEndIdx + 2] || '';
 
                     // Create or update receiver
-                    this.createReceiver(id, ip, currentTx, status, resolution, undefined, mode, model);
+                    this.createReceiver(id, ip, currentTx, status, resolution, undefined, mode, model).catch(err =>
+                        this.log.warn(`Could not update receiver ${id}: ${err.message}`),
+                    );
                     parsedCount++;
                 }
             }
@@ -2112,7 +2181,7 @@ class BlustreamAcm extends utils.Adapter {
      * @param {string} data - Transmitter data
      */
     processTransmitterInfo(data) {
-        this.log.info(`Processing transmitter info data, length: ${data.length} bytes`);
+        this.log.debug(`Processing transmitter info data, length: ${data.length} bytes`);
 
         // Split into lines for easier processing
         const lines = data
@@ -2191,13 +2260,9 @@ class BlustreamAcm extends utils.Adapter {
             }
         }
 
-        this.log.info(`Extracted data for TX ${id}:`);
-        this.log.info(`  Name: "${name}"`);
-        this.log.info(`  IP: ${ip}`);
-        this.log.info(`  Status: ${status}`);
-        this.log.info(`  EDID: ${edid}`);
-        this.log.info(`  Version: ${version}`);
-        this.log.info(`  MAC: ${mac}`);
+        this.log.debug(
+            `Extracted data for TX ${id}: name="${name}" ip=${ip} status=${status} edid=${edid} version=${version} mac=${mac}`,
+        );
 
         // Create all objects first to avoid warnings
         this.ensureTransmitterObjects(id)
@@ -2216,7 +2281,7 @@ class BlustreamAcm extends utils.Adapter {
                     common: {
                         name: name || `Transmitter ${id}`,
                     },
-                });
+                }).catch(err => this.log.warn(`Could not rename transmitter ${id}: ${err.message}`));
             })
             .catch(err => {
                 this.log.error(`Error processing transmitter ${id}: ${err.message}`);
@@ -2378,7 +2443,7 @@ class BlustreamAcm extends utils.Adapter {
      * @param {string} data - Receiver data
      */
     processReceiverInfo(data) {
-        this.log.info(`Processing receiver info data, length: ${data.length} bytes`);
+        this.log.debug(`Processing receiver info data, length: ${data.length} bytes`);
 
         // Verify this is a receiver info response
         if (!BANNER.output.test(data)) {
@@ -2523,16 +2588,10 @@ class BlustreamAcm extends utils.Adapter {
             }
         }
 
-        // Log all extracted data
-        this.log.info(`Complete extracted data for RX ${id}:`);
-        this.log.info(`  Name: "${name}"`);
-        this.log.info(`  IP: ${ip}`);
-        this.log.info(`  Status: ${status}`);
-        this.log.info(`  Current TX: ${currentTx}`);
-        this.log.info(`  Resolution: ${resolution}`);
-        this.log.info(`  Mode: ${mode}`);
-        this.log.info(`  Version: ${version}`);
-        this.log.info(`  MAC: ${mac}`);
+        this.log.debug(
+            `Extracted data for RX ${id}: name="${name}" ip=${ip} status=${status} tx=${currentTx} ` +
+                `resolution=${resolution} mode=${mode} version=${version} mac=${mac}`,
+        );
 
         // Ensure objects exist before updating states
         this.ensureReceiverObjects(id)
@@ -2554,7 +2613,9 @@ class BlustreamAcm extends utils.Adapter {
 
                 // For preview URL, we need the source transmitter's IP
                 if (currentTx && this.transmitterStates[currentTx]) {
-                    this.updatePreviewUrl(`receivers.${id}.previewUrl`, this.transmitterStates[currentTx].ip);
+                    this.updatePreviewUrl(`receivers.${id}.previewUrl`, this.transmitterStates[currentTx].ip).catch(
+                        err => this.log.warn(`Could not update preview URL for RX ${id}: ${err.message}`),
+                    );
                 }
 
                 // Update channel name
@@ -2562,7 +2623,7 @@ class BlustreamAcm extends utils.Adapter {
                     common: {
                         name: name || `Receiver ${id}`,
                     },
-                });
+                }).catch(err => this.log.warn(`Could not rename receiver ${id}: ${err.message}`));
             })
             .catch(err => {
                 this.log.error(`Error processing receiver ${id}: ${err.message}`);
@@ -2639,7 +2700,13 @@ class BlustreamAcm extends utils.Adapter {
                 states: ARC_MODES,
             },
             { id: 'resolution', name: 'Output Resolution', type: 'string', role: 'text' },
-            { id: 'mode', name: 'Operation Mode', type: 'string', role: 'text' },
+            {
+                id: 'mode',
+                name: 'Operation Mode',
+                type: 'string',
+                role: 'text',
+                states: { MX: 'Matrix', VW: 'Video Wall' },
+            },
             { id: 'version', name: 'Firmware Version', type: 'string', role: 'info.firmware' },
             { id: 'mac', name: 'MAC Address', type: 'string', role: 'info.mac' },
             { id: 'model', name: 'Product Model', type: 'string', role: 'info.model' },
@@ -2881,7 +2948,9 @@ class BlustreamAcm extends utils.Adapter {
                     this.receiverStates[rxId].currentAudioTx = txId;
 
                     // Update preview URL if we have a source IP
-                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, sourceIp);
+                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, sourceIp).catch(err =>
+                        this.log.warn(`Could not update preview URL for RX ${rxId}: ${err.message}`),
+                    );
                 }
             })
             .catch(err => {
@@ -2912,7 +2981,9 @@ class BlustreamAcm extends utils.Adapter {
                     this.receiverStates[rxId].currentVideoTx = txId;
 
                     if (this.transmitterStates[txId]) {
-                        this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip);
+                        this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip).catch(
+                            err => this.log.warn(`Could not update preview URL for RX ${rxId}: ${err.message}`),
+                        );
                     }
                 }
             })

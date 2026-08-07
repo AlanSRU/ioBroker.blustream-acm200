@@ -53,7 +53,7 @@ Install the adapter from the ioBroker admin interface (Adapters → search for "
 ### Advanced Settings
 
 - **Polling Interval (ms)**: How often to poll for status updates (default: 30000). Must be at least twice the command timeout so each poll can finish before the next one starts — lower values are raised automatically and a warning is written to the log.
-- **Command Timeout (ms)**: Timeout for commands sent to the controller (default: 5000)
+- **Command Timeout (ms)**: Timeout for a single command sent to the controller (default: 10000, minimum 1000). Raise it if a large system reports command timeouts in the log.
 
 ## States
 
@@ -133,11 +133,18 @@ setState('blustream-acm.0.system.commands.routeAll', '003');
 	### __WORK IN PROGRESS__
 -->
 ### __WORK IN PROGRESS__
+- (Alan Paris) **Fixed: the adapter stopped retrying after a failed connection.** If the controller was unreachable when the adapter started (or at the moment a cable was pulled), the internal "connection in progress" flag was never cleared, so the scheduled reconnect returned immediately without re-arming and the instance stayed dead until it was restarted manually
+- (Alan Paris) **Fixed: a command timing out while queued removed the wrong entry**, orphaning the in-flight command's promise and advancing the queue out of order
+- (Alan Paris) **Command Timeout is now actually applied to commands.** It previously only governed the socket and the initial handshake, while every real command used a hardcoded 10 s. The default was raised 5000 → 10000 ms so a fresh install behaves as before — if you had left it at the old 5000 default and see timeouts on a large system, raise it
+- (Alan Paris) Writes to routing states are validated: a non-numeric transmitter id is now rejected with a warning instead of being sent to the controller verbatim
 - (Alan Paris) The nightly full refresh no longer runs at a fixed 03:00; it is spread randomly over 02:45–03:15 so multiple instances do not poll simultaneously
 - (Alan Paris) Polling interval is now floored at twice the command timeout, so a poll cycle can always complete before the next one is armed
-- (Alan Paris) Preview URLs are only rewritten when the previewed source changes, instead of on every poll
+- (Alan Paris) Preview URLs are only rewritten when the previewed source changes, instead of on every poll, and are correctly rebuilt for a device that is removed and comes back
 - (Alan Paris) Clarified the `refresh` / `refreshAll` button labels and descriptions; existing installs are updated on start
-- (Alan Paris) Declared `statusBuffer` / `collectingStatus` in the constructor and cleaned up a stale heartbeat comment
+- (Alan Paris) Corrected the Command Timeout help text in the configuration UI, which described the polling interval
+- (Alan Paris) Per-device detail parsing now logs at debug level instead of flooding the info log on every refresh
+- (Alan Paris) Receiver `mode` shows "Matrix"/"Video Wall" instead of the raw `MX`/`VW` tokens, and selecting the unsupported "Auto" audio source now explains why it is rejected
+- (Alan Paris) Hardened error handling: transient object-database failures during a status parse are logged instead of taking the instance down
 
 ### 0.3.1 (2026-07-17)
 - (Alan Paris) Object role corrections for ioBroker repository review: per-device `connected` states now use `indicator.reachable`; transmitter/receiver `id` states use the `text` role
