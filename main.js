@@ -33,6 +33,23 @@ const BANNER = {
     status: /ACM\d+ Status Info/,
 };
 
+/**
+ * Labels for the two refresh buttons, which are easily confused. Held here because
+ * they are used twice: once when the objects are created and once to push the text
+ * onto installs that predate a wording change (setObjectNotExists never updates an
+ * object that already exists) — see syncCommandLabels().
+ */
+const REFRESH_LABELS = {
+    'system.commands.refresh': {
+        name: 'Refresh Status',
+        desc: 'Run a single STATUS poll (routes, names and online state) — the same query used by regular polling. Use refreshAll for per-device details.',
+    },
+    'system.commands.refreshAll': {
+        name: 'Refresh All Device Details',
+        desc: 'Query per-device details (firmware, MAC, mode, breakaway routes) for every known transmitter and receiver. Slower than refresh — it sends one command per device.',
+    },
+};
+
 class BlustreamAcm extends utils.Adapter {
     constructor(options) {
         super({
@@ -71,12 +88,19 @@ class BlustreamAcm extends utils.Adapter {
         this.processingCommand = false;
 
         this.timeout = 5000; // default command timeout (ms); overridden from config in onReady
-        this.heartbeatInterval = 10000; // Reduce to 10 seconds
+        this.heartbeatInterval = 10000; // Heartbeat every 10 s
 
         this.collectingTxInfo = false;
         this.txInfoBuffer = '';
         this.collectingRxInfo = false;
         this.rxInfoBuffer = '';
+        this.collectingStatus = false;
+        this.statusBuffer = '';
+
+        // Last source IP each preview URL was built from, keyed by state id.
+        // The URL carries a cache-busting timestamp, so it is only rewritten
+        // when the source actually changes (see updatePreviewUrl).
+        this.previewUrlSources = {};
     }
 
     /**
@@ -129,6 +153,25 @@ class BlustreamAcm extends utils.Adapter {
     }
 
     /**
+     * Write a preview image URL, but only when the source it points at has changed.
+     * The URL carries a cache-busting timestamp, so rebuilding it on every poll would
+     * emit a state change every cycle even when nothing was re-routed.
+     *
+     * @param {string} stateId - Preview URL state, relative to the instance namespace
+     * @param {string} sourceIp - IP of the transmitter being previewed; ignored if empty
+     * @returns {Promise<void>} resolves once the state has been written (or skipped)
+     */
+    async updatePreviewUrl(stateId, sourceIp) {
+        if (!sourceIp || this.previewUrlSources[stateId] === sourceIp) {
+            return;
+        }
+
+        this.previewUrlSources[stateId] = sourceIp;
+        const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${Date.now()}`;
+        await this.setState(stateId, previewUrl, true);
+    }
+
+    /**
      * Initialize the adapter
      */
     async onReady() {
@@ -136,13 +179,12 @@ class BlustreamAcm extends utils.Adapter {
         await this.setObjectNotExistsAsync('system.commands.refreshAll', {
             type: 'state',
             common: {
-                name: 'Refresh All Device Details',
+                ...REFRESH_LABELS['system.commands.refreshAll'],
                 type: 'boolean',
                 role: 'button',
                 read: false,
                 write: true,
                 def: false,
-                desc: 'Perform a full refresh of all transmitter and receiver details',
             },
             native: {},
         });
@@ -204,14 +246,17 @@ class BlustreamAcm extends utils.Adapter {
         // Get configuration from admin settings (validated & clamped to safe ranges)
         this.host = this.config.host || this.host;
         this.port = this.validateNumber('port', this.config.port, this.port, 1, 65535);
+        this.timeout = this.validateNumber('timeout', this.config.timeout, this.timeout, 500, 60000);
+        // A poll cycle must be able to finish (STATUS command + response) before the next one is
+        // armed, so the interval floor is derived from the command timeout rather than fixed.
+        const pollFloor = Math.max(1000, this.timeout * 2);
         this.pollInterval = this.validateNumber(
             'pollInterval',
             this.config.pollInterval,
-            this.pollInterval,
-            1000,
+            Math.max(this.pollInterval, pollFloor),
+            pollFloor,
             3600000,
         );
-        this.timeout = this.validateNumber('timeout', this.config.timeout, this.timeout, 500, 60000);
 
         this.log.info(`Initializing with host: ${this.host}, port: ${this.port}, timeout: ${this.timeout}ms`);
 
@@ -270,7 +315,7 @@ class BlustreamAcm extends utils.Adapter {
         await this.setObjectNotExistsAsync('system.commands.refresh', {
             type: 'state',
             common: {
-                name: 'Refresh All',
+                ...REFRESH_LABELS['system.commands.refresh'],
                 type: 'boolean',
                 role: 'button',
                 read: false,
@@ -363,6 +408,9 @@ class BlustreamAcm extends utils.Adapter {
         // Remove any states left over from a previous model that the current
         // model does not support (setObjectNotExists never deletes objects).
         await this.reconcileModelStates();
+
+        // Bring the refresh button labels up to date on pre-existing installs
+        await this.syncCommandLabels();
 
         // Start connection to the controller - Use new socket-based connection
         this.connectToACM();
@@ -1217,22 +1265,33 @@ class BlustreamAcm extends utils.Adapter {
 
     /**
      * Set up scheduled refresh of device information
+     *
+     * @param {boolean} [skipToday] - Always schedule for tomorrow. Set when re-arming
+     *   straight after a run, so a slot near the late edge of the randomised window
+     *   cannot trigger a second refresh the same night.
      */
-    setupScheduledRefresh() {
+    setupScheduledRefresh(skipToday = false) {
         // Clear any existing scheduled refresh
         if (this.scheduledRefreshTimer) {
             this.clearTimeout(this.scheduledRefreshTimer);
             this.scheduledRefreshTimer = null;
         }
 
-        // Calculate time until next 3am
+        // Calculate time until the next nightly refresh. The slot is nominally 3am but is
+        // spread over 02:45–03:15 by a random offset: a fixed timestamp would make every
+        // instance on every host hit its controller at the same moment.
         const now = new Date();
         const nextRefresh = new Date(now);
 
-        // Set to next 3am
         nextRefresh.setHours(3, 0, 0, 0);
+        if (skipToday || now >= nextRefresh) {
+            nextRefresh.setDate(nextRefresh.getDate() + 1);
+        }
 
-        // If it's already past 3am, set for next day
+        const offsetMs = Math.floor(Math.random() * 31 * 60 * 1000) - 15 * 60 * 1000;
+        nextRefresh.setTime(nextRefresh.getTime() + offsetMs);
+
+        // A negative offset can pull the slot back before "now" — push it out a day
         if (now >= nextRefresh) {
             nextRefresh.setDate(nextRefresh.getDate() + 1);
         }
@@ -1255,12 +1314,12 @@ class BlustreamAcm extends utils.Adapter {
                 .then(() => {
                     this.log.info('Scheduled refresh completed successfully');
                     // Schedule next refresh
-                    this.setupScheduledRefresh();
+                    this.setupScheduledRefresh(true);
                 })
                 .catch(err => {
                     this.log.error(`Error during scheduled refresh: ${err.message}`);
                     // Still schedule next refresh despite error
-                    this.setupScheduledRefresh();
+                    this.setupScheduledRefresh(true);
                 });
         }, msUntilRefresh);
     }
@@ -1439,12 +1498,7 @@ class BlustreamAcm extends utils.Adapter {
 
                 // Update the receiver's preview URL to show the new source
                 if (this.transmitterStates[txId]) {
-                    const sourceIp = this.transmitterStates[txId].ip;
-                    if (sourceIp) {
-                        const timestamp = Date.now();
-                        const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${timestamp}`;
-                        this.setState(`receivers.${rxId}.previewUrl`, previewUrl, true);
-                    }
+                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip);
                 }
             })
             .catch(err => {
@@ -1476,12 +1530,7 @@ class BlustreamAcm extends utils.Adapter {
                 }
 
                 if (this.transmitterStates[txId]) {
-                    const sourceIp = this.transmitterStates[txId].ip;
-                    if (sourceIp) {
-                        const timestamp = Date.now();
-                        const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${timestamp}`;
-                        this.setState(`receivers.${rxId}.previewUrl`, previewUrl, true);
-                    }
+                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip);
                 }
             })
             .catch(err => {
@@ -2247,6 +2296,29 @@ class BlustreamAcm extends utils.Adapter {
     }
 
     /**
+     * Push the current name/description onto the two refresh command objects.
+     * `setObjectNotExists` leaves an existing object untouched, so installs created
+     * before a wording change would keep the old (in this case actively misleading)
+     * label forever. Only the text is written; role/type/def stay as created.
+     *
+     * @returns {Promise<void>} resolves once both objects have been checked
+     */
+    async syncCommandLabels() {
+        for (const [id, labels] of Object.entries(REFRESH_LABELS)) {
+            try {
+                const obj = await this.getObjectAsync(id);
+                if (!obj || (obj.common.name === labels.name && obj.common.desc === labels.desc)) {
+                    continue;
+                }
+                await this.extendObjectAsync(id, { common: { ...labels } });
+                this.log.debug(`Updated label and description for ${id}`);
+            } catch (err) {
+                this.log.warn(`Could not update label for ${id}: ${err.message}`);
+            }
+        }
+    }
+
+    /**
      * Remove feature-gated states that the currently-configured model does not
      * support. Needed because `setObjectNotExists` never deletes objects, so a
      * model change (e.g. ACM1000 → ACM500 or → ACM200) would otherwise leave
@@ -2481,11 +2553,8 @@ class BlustreamAcm extends utils.Adapter {
                 this.setState(`receivers.${id}.mac`, mac, true);
 
                 // For preview URL, we need the source transmitter's IP
-                if (currentTx && this.transmitterStates[currentTx] && this.transmitterStates[currentTx].ip) {
-                    const sourceIp = this.transmitterStates[currentTx].ip;
-                    const timestamp = Date.now();
-                    const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${timestamp}`;
-                    this.setState(`receivers.${id}.previewUrl`, previewUrl, true);
+                if (currentTx && this.transmitterStates[currentTx]) {
+                    this.updatePreviewUrl(`receivers.${id}.previewUrl`, this.transmitterStates[currentTx].ip);
                 }
 
                 // Update channel name
@@ -2669,9 +2738,7 @@ class BlustreamAcm extends utils.Adapter {
         }
 
         // Generate a preview URL - format as provided by user
-        const timestamp = Date.now();
-        const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${ip}&capwidth=240&time=${timestamp}`;
-        await this.setState(`${txId}.previewUrl`, previewUrl, true);
+        await this.updatePreviewUrl(`${txId}.previewUrl`, ip);
 
         // Update our internal state
         this.transmitterStates[id] = {
@@ -2765,11 +2832,7 @@ class BlustreamAcm extends utils.Adapter {
         }
 
         // Generate a preview URL - only if we have a source IP
-        if (sourceIp) {
-            const timestamp = Date.now();
-            const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${timestamp}`;
-            await this.setState(`${rxId}.previewUrl`, previewUrl, true);
-        }
+        await this.updatePreviewUrl(`${rxId}.previewUrl`, sourceIp);
 
         // Update our internal state
         this.receiverStates[id] = {
@@ -2818,11 +2881,7 @@ class BlustreamAcm extends utils.Adapter {
                     this.receiverStates[rxId].currentAudioTx = txId;
 
                     // Update preview URL if we have a source IP
-                    if (sourceIp) {
-                        const timestamp = Date.now();
-                        const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${timestamp}`;
-                        this.setState(`receivers.${rxId}.previewUrl`, previewUrl, true);
-                    }
+                    this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, sourceIp);
                 }
             })
             .catch(err => {
@@ -2853,12 +2912,7 @@ class BlustreamAcm extends utils.Adapter {
                     this.receiverStates[rxId].currentVideoTx = txId;
 
                     if (this.transmitterStates[txId]) {
-                        const sourceIp = this.transmitterStates[txId].ip;
-                        if (sourceIp) {
-                            const timestamp = Date.now();
-                            const previewUrl = `http://${this.host}/cgi-bin/capture.cgi?hostip=${sourceIp}&capwidth=240&time=${timestamp}`;
-                            this.setState(`receivers.${rxId}.previewUrl`, previewUrl, true);
-                        }
+                        this.updatePreviewUrl(`receivers.${rxId}.previewUrl`, this.transmitterStates[txId].ip);
                     }
                 }
             })

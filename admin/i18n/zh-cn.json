@@ -5,7 +5,7 @@
     "Connection Settings": "连接设置",
     "Controller Model": "控制器型号",
     "Default Telnet port: 23": "默认 Telnet 端口：23",
-    "How often to poll for status updates (default: 30000 ms)": "轮询状态更新的频率（默认值：30000 毫秒）",
+    "How often to poll for status updates (default: 30000 ms). Must be at least twice the command timeout; lower values are raised automatically.": "轮询状态更新的频率（默认值：30000 毫秒）。必须至少为命令超时的两倍；较低的值将自动提高。",
     "IP Address": "IP地址",
     "IP address of the ACM controller": "ACM控制器的IP地址",
     "Main settings": "主要设置",

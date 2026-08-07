@@ -52,7 +52,7 @@ Install the adapter from the ioBroker admin interface (Adapters → search for "
 
 ### Advanced Settings
 
-- **Polling Interval (ms)**: How often to poll for status updates (default: 30000)
+- **Polling Interval (ms)**: How often to poll for status updates (default: 30000). Must be at least twice the command timeout so each poll can finish before the next one starts — lower values are raised automatically and a warning is written to the log.
 - **Command Timeout (ms)**: Timeout for commands sent to the controller (default: 5000)
 
 ## States
@@ -64,11 +64,19 @@ States marked _(model)_ are only created when the selected controller model supp
 - `info.connection` — Connection status to the controller
 - `system.status.connected` — Same as info.connection (legacy)
 - `system.status.lastUpdate` — Timestamp of the last status update
-- `system.commands.refresh` — Trigger a manual refresh of all status information
-- `system.commands.refreshAll` — Force a complete state rebuild
+- `system.status.nextScheduledRefresh` — When the next nightly full refresh will run
+- `system.status.lastFullRefresh` — Timestamp of the last full refresh
+- `system.status.fullRefreshRunning` — True while a full refresh is in progress
 - `system.commands.routeAll` — Write a transmitter ID to route audio + video to all displays
 - `system.commands.routeAllVideo` — Write a transmitter ID to route video only to all displays
 - `system.commands.routeAllAudio` — Write a transmitter ID to route audio only to all displays
+
+#### Refresh commands
+
+The two refresh buttons do different amounts of work:
+
+- `system.commands.refresh` — sends one `STATUS` query, the same one used by regular polling. Updates routes, names and online state for every device in a single command. Cheap; use this after changing something outside ioBroker.
+- `system.commands.refreshAll` — queries `IN<id>` / `OUT<id>` for every known device, which fills in the per-device details `STATUS` does not report (firmware version, MAC, output mode, breakaway routes). Sends one command per device, so it takes noticeably longer. It also runs automatically once a night, at a random time between 02:45 and 03:15 so that multiple instances do not all poll at the same moment.
 
 ### Transmitters (per transmitter)
 
@@ -125,6 +133,11 @@ setState('blustream-acm.0.system.commands.routeAll', '003');
 	### __WORK IN PROGRESS__
 -->
 ### __WORK IN PROGRESS__
+- (Alan Paris) The nightly full refresh no longer runs at a fixed 03:00; it is spread randomly over 02:45–03:15 so multiple instances do not poll simultaneously
+- (Alan Paris) Polling interval is now floored at twice the command timeout, so a poll cycle can always complete before the next one is armed
+- (Alan Paris) Preview URLs are only rewritten when the previewed source changes, instead of on every poll
+- (Alan Paris) Clarified the `refresh` / `refreshAll` button labels and descriptions; existing installs are updated on start
+- (Alan Paris) Declared `statusBuffer` / `collectingStatus` in the constructor and cleaned up a stale heartbeat comment
 
 ### 0.3.1 (2026-07-17)
 - (Alan Paris) Object role corrections for ioBroker repository review: per-device `connected` states now use `indicator.reachable`; transmitter/receiver `id` states use the `text` role

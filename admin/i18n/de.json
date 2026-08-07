@@ -5,7 +5,7 @@
     "Connection Settings": "Verbindungseinstellungen",
     "Controller Model": "Controller-Modell",
     "Default Telnet port: 23": "Standard-Telnet-Port: 23",
-    "How often to poll for status updates (default: 30000 ms)": "Wie oft werden Statusaktualisierungen abgefragt (Standard: 30.000 ms)",
+    "How often to poll for status updates (default: 30000 ms). Must be at least twice the command timeout; lower values are raised automatically.": "Wie oft werden Statusaktualisierungen abgefragt (Standard: 30.000 ms). Muss mindestens doppelt so groß wie das Befehls-Timeout sein; kleinere Werte werden automatisch angehoben.",
     "IP Address": "IP-Adresse",
     "IP address of the ACM controller": "IP-Adresse des ACM-Controllers",
     "Main settings": "Haupteinstellungen",

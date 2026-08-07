@@ -82,7 +82,7 @@
                     "min": 1000,
                     "max": 3600000,
                     "step": 1000,
-                    "help": "How often to poll for status updates (default: 30000 ms)",
+                    "help": "How often to poll for status updates (default: 30000 ms). Must be at least twice the command timeout; lower values are raised automatically.",
                     "newLine": true,
                     "xs": 12,
                     "sm": 12,
